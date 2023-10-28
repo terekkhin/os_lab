@@ -19,6 +19,7 @@ struct FactorialArgs {
   uint64_t mod;
 };
 
+/*
 uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
   uint64_t result = 0;
   a = a % mod;
@@ -30,12 +31,14 @@ uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
   }
 
   return result % mod;
-}
+}*/
 
 uint64_t Factorial(const struct FactorialArgs *args) {
   uint64_t ans = 1;
 
-  // TODO: your code here
+  for (int i = args->begin; i < args->end; i++) {
+        ans = MultModulo(ans, i, args->mod);
+    }
 
   return ans;
 }
@@ -159,8 +162,8 @@ int main(int argc, char **argv) {
       struct FactorialArgs args[tnum];
       for (uint32_t i = 0; i < tnum; i++) {
         // TODO: parallel somehow
-        args[i].begin = 1;
-        args[i].end = 1;
+        args[i].begin = begin + ((end - begin) / tnum) * i;
+        args[i].end = (i == tnum - 1) ? end + 1: begin + ((end - begin) / tnum) * (i + 1);
         args[i].mod = mod;
 
         if (pthread_create(&threads[i], NULL, ThreadFactorial,
@@ -174,6 +177,7 @@ int main(int argc, char **argv) {
       for (uint32_t i = 0; i < tnum; i++) {
         uint64_t result = 0;
         pthread_join(threads[i], (void **)&result);
+        printf("%d\n", result);
         total = MultModulo(total, result, mod);
       }
 

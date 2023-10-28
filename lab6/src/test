@@ -17,7 +17,6 @@ struct Server {
   int port;
 };
 
-/*
 uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
   uint64_t result = 0;
   a = a % mod;
@@ -30,7 +29,6 @@ uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
 
   return result % mod;
 }
-*/
 
 bool ConvertStringToUI64(const char *str, uint64_t *val) {
   char *end = NULL;
@@ -143,7 +141,6 @@ int main(int argc, char **argv) {
   uint64_t server_response = 0;
 
   // TODO: work continiously, rewrite to make parallel
-  int *sck = malloc(sizeof(int) * servers_num); 
   for (int i = 0; i < servers_num; i++) {
     struct hostent *hostname = gethostbyname(to[i].ip);
     if (hostname == NULL) {
@@ -156,13 +153,13 @@ int main(int argc, char **argv) {
     server.sin_port = htons(to[i].port);
     server.sin_addr.s_addr = *((unsigned long *)hostname->h_addr);
 
-    sck[i] = socket(AF_INET, SOCK_STREAM, 0);
+    int sck = socket(AF_INET, SOCK_STREAM, 0);
     if (sck < 0) {
       fprintf(stderr, "Socket creation failed!\n");
       exit(1);
     }
 
-    if (connect(sck[i], (struct sockaddr *)&server, sizeof(server)) < 0) {
+    if (connect(sck, (struct sockaddr *)&server, sizeof(server)) < 0) {
       fprintf(stderr, "Connection failed\n");
       exit(1);
     }
@@ -177,25 +174,23 @@ int main(int argc, char **argv) {
     memcpy(task + sizeof(uint64_t), &end, sizeof(uint64_t));
     memcpy(task + 2 * sizeof(uint64_t), &mod, sizeof(uint64_t));
 
-    if (send(sck[i], task, sizeof(task), 0) < 0) {
+    if (send(sck, task, sizeof(task), 0) < 0) {
       fprintf(stderr, "Send failed\n");
       exit(1);
     }
-    }
-    
-  for (int i = 0; i < servers_num; i++) {
+
     char response[sizeof(uint64_t)];
-    if (recv(sck[i], response, sizeof(response), 0) < 0) {
+    if (recv(sck, response, sizeof(response), 0) < 0) {
       fprintf(stderr, "Recieve failed\n");
       exit(1);
     }
-   
+
     // TODO: from one server
     // unite results
     memcpy(&server_response, response, sizeof(uint64_t));
     answer = MultModulo(answer, server_response, mod);
 
-    close(sck[i]);
+    close(sck);
   }
   printf("answer: %llu\n", answer);
   free(to);
